@@ -5,9 +5,9 @@ on:
   push:
     branches: [ "main" ]   # お好みで
   workflow_dispatch:
-
 jobs:
   deploy:
+    if: contains(github.event.head_commit.message, '[skip deploy]') == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
