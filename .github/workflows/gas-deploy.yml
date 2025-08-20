@@ -1,0 +1,39 @@
+# .github/workflows/gas-deploy.yml
+name: Deploy to Apps Script
+
+on:
+  push:
+    branches: [ "main" ]   # お好みで
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install clasp
+        run: npm i -g @google/clasp
+
+      - name: Write ~/.clasprc.json from secret
+        run: |
+          mkdir -p ~/. 
+          cat > ~/.clasprc.json << 'JSON'
+          ${{ secrets.CLASPRC_JSON }}
+          JSON
+
+      - name: Write .clasp.json
+        run: |
+          cat > .clasp.json << JSON
+          {
+            "scriptId": "${{ secrets.SCRIPT_ID }}",
+            "rootDir": "./"
+          }
+          JSON
+
+      - name: Push to GAS
+        run: clasp push -f
