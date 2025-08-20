@@ -1,8 +1,7 @@
-# .github/workflows/gas-pull.yml
-name: Pull from Apps Script to GitHub
+name: Pull from Apps Script and Auto-Commit
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch: {}   # 手動実行のみ
 
 jobs:
   pull:
@@ -10,6 +9,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
 
       - uses: actions/setup-node@v4
         with:
@@ -20,7 +21,7 @@ jobs:
 
       - name: Write ~/.clasprc.json from secret
         run: |
-          mkdir -p ~/. 
+          mkdir -p ~/
           cat > ~/.clasprc.json << 'JSON'
           ${{ secrets.CLASPRC_JSON }}
           JSON
@@ -28,24 +29,19 @@ jobs:
       - name: Write .clasp.json
         run: |
           cat > .clasp.json << JSON
-          {
-            "scriptId": "${{ secrets.SCRIPT_ID }}",
-            "rootDir": "./"
-          }
+          { "scriptId": "${{ secrets.SCRIPT_ID }}", "rootDir": "./" }
           JSON
 
       - name: Pull from GAS
         run: clasp pull
 
-      # 変更があれば PR を作成（main を直接汚さない安全運用）
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+      - name: Auto commit if changed
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit-message: "chore: sync from GAS [skip deploy]"
-          title: "Sync from GAS"
-          body: |
-            This PR syncs changes from Google Apps Script into the repo via `clasp pull`.
-            - Created by CI
-          branch: "ci/gas-sync"
-          delete-branch: true
-          signoff: false
+          commit_message: "chore: sync from GAS [skip deploy]"
+          branch: main
+          file_pattern: |
+            *.gs
+            *.js
+            *.ts
+            appsscript.json
