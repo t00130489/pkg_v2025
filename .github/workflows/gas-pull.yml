@@ -3,9 +3,6 @@ name: Pull from Apps Script to GitHub
 
 on:
   workflow_dispatch: {}
-  schedule:
-    # 毎日 03:00 JST に実行（GitHubはUTC運用なので18:00 UTC）
-    - cron: '0 18 * * *'
 
 jobs:
   pull:
