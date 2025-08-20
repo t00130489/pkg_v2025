@@ -1,13 +1,10 @@
-# .github/workflows/gas-deploy.yml
-name: Deploy to Apps Script
+name: Deploy to Apps Script (manual)
 
 on:
-  push:
-    branches: [ "main" ]   # お好みで
-  workflow_dispatch:
+  workflow_dispatch: {}  # ← 手動実行のみ
+
 jobs:
   deploy:
-    if: contains(github.event.head_commit.message, '[skip deploy]') == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +18,7 @@ jobs:
 
       - name: Write ~/.clasprc.json from secret
         run: |
-          mkdir -p ~/. 
+          mkdir -p ~/
           cat > ~/.clasprc.json << 'JSON'
           ${{ secrets.CLASPRC_JSON }}
           JSON
@@ -31,7 +28,7 @@ jobs:
           cat > .clasp.json << JSON
           {
             "scriptId": "${{ secrets.SCRIPT_ID }}",
-            "rootDir": "./"
+            "rootDir": "./"           // ルート以外なら "src" 等に変更
           }
           JSON
 
