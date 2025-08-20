@@ -1,0 +1,54 @@
+# .github/workflows/gas-pull.yml
+name: Pull from Apps Script to GitHub
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # 毎日 03:00 JST に実行（GitHubはUTC運用なので18:00 UTC）
+    - cron: '0 18 * * *'
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install clasp
+        run: npm i -g @google/clasp
+
+      - name: Write ~/.clasprc.json from secret
+        run: |
+          mkdir -p ~/. 
+          cat > ~/.clasprc.json << 'JSON'
+          ${{ secrets.CLASPRC_JSON }}
+          JSON
+
+      - name: Write .clasp.json
+        run: |
+          cat > .clasp.json << JSON
+          {
+            "scriptId": "${{ secrets.SCRIPT_ID }}",
+            "rootDir": "./"
+          }
+          JSON
+
+      - name: Pull from GAS
+        run: clasp pull
+
+      # 変更があれば PR を作成（main を直接汚さない安全運用）
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore: sync from GAS [skip deploy]"
+          title: "Sync from GAS"
+          body: |
+            This PR syncs changes from Google Apps Script into the repo via `clasp pull`.
+            - Created by CI
+          branch: "ci/gas-sync"
+          delete-branch: true
+          signoff: false
